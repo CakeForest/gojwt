@@ -91,11 +91,12 @@ func Decode(jwt string) (map[string]string, error) {
 		return nil, errors.New("Expired JWT")
 	}
 	// This probably should be one of the first checks, preceeding the date check.  If the signature of the JWT doesn't match there is likely fuckery afoot
-	ha := hmac256(string(parts[0])+"."+string(parts[1]), sha256wrapper(salt+string(payload)))
-	if ha != string(signature) {
-		return nil, errors.New("Invalid JWT signature")
+	if headdat["alg"].(string) == "HS256" {
+		ha := hmac256(string(parts[0])+"."+string(parts[1]), sha256wrapper(salt+string(payload)))
+		if ha != string(signature) {
+			return nil, errors.New("Invalid JWT signature")
+		}
 	}
-
 	return pldat, nil
 }
 
