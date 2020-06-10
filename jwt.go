@@ -38,11 +38,9 @@ func init() {
 }
 
 // Generate compiles and signs a JWT from a claim and an expiration time in seconds from current time.
-func Generate(claim map[string]string, exp int) string {
-	ex := time.Now().Add(time.Second * time.Duration(exp))
-	expiration := ex.Format("2006-01-02 15:04:05")
+func Generate(claim map[string]string) string {
 	// Build the jwt header by hand since alg and typ aren't going to change (for now)
-	header := base64.StdEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT","exp":"` + expiration + `"}`))
+	header := base64.StdEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
 	// Build json payload and base64 encode it
 	pl2, err := json.Marshal(claim)
 	if err != nil {
@@ -77,18 +75,6 @@ func Decode(jwt string) (map[string]string, error) {
 	var headdat map[string]interface{}
 	if err := json.Unmarshal(header, &headdat); err != nil {
 		fmt.Println(err.Error())
-	}
-	// Extract and parse expiration date from header
-	layout := "2006-01-02 15:04:05"
-	exp := headdat["exp"].(string)
-	expParsed, err := time.ParseInLocation(layout, exp, time.Now().Location())
-	if err != nil {
-		fmt.Println(err)
-	}
-	// Check how old the JWT is.  Return an error if it is expired
-	now := time.Now()
-	if now.After(expParsed) {
-		return nil, errors.New("Expired JWT")
 	}
 	// This probably should be one of the first checks, preceeding the date check.  If the signature of the JWT doesn't match there is likely fuckery afoot
 	if headdat["alg"].(string) == "HS256" {
